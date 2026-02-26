@@ -539,6 +539,10 @@ function validateItems() {
             alert("Todos los ítems deben tener una descripción");
             return false;
         }
+        if (!centroCosto) { // NUEVA VALIDACIÓN
+            alert("Todos los ítems deben tener un centro de costo");
+            return false;
+        }
         
         if (qty <= 0) {
             alert("La cantidad debe ser mayor a cero");
