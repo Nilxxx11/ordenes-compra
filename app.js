@@ -532,6 +532,7 @@ function validateItems() {
     
     for (let row of rows) {
         const desc = row.querySelector('.item-desc')?.value.trim();
+        const centroCosto = row.querySelector('.item-centro-costo')?.value.trim();
         const qty = parseFloat(row.querySelector('.item-qty')?.value) || 0;
         const price = parseFloat(row.querySelector('.item-price')?.value) || 0;
         
@@ -539,7 +540,7 @@ function validateItems() {
             alert("Todos los ítems deben tener una descripción");
             return false;
         }
-        if (!centroCosto) { // NUEVA VALIDACIÓN
+        if (!centroCosto) {
             alert("Todos los ítems deben tener un centro de costo");
             return false;
         }
