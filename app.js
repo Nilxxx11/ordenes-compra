@@ -411,7 +411,7 @@ window.addItemRow = function(itemData = null) {
         tr.innerHTML = `
             <td>${rowCount}</td>
             <td><input type="text" class="item-desc" value="${itemData.descripcion || ''}" placeholder="Descripción" required></td>
-            <td><input type="text" class="item-centro-costo" value="${itemData.centroCosto || ''}" placeholder="Centro de costo"></td>
+            <td><input type="text" class="item-centro-costo" value="${itemData.centroCosto || ''}" placeholder="Centro de costo" required></td>
             <td><input type="number" class="item-qty" value="${itemData.cantidad || 1}" min="1" onchange="calculateRow('${rowId}')"></td>
             <td><input type="number" class="item-price" value="${itemData.pUnit || 0}" min="0" step="100" onchange="calculateRow('${rowId}')"></td>
             <td><span class="item-total">$${(itemData.total || 0).toLocaleString('es-CO')}</span></td>
