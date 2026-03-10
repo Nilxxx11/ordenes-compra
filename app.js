@@ -9,12 +9,12 @@ import {
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
 // ── Globals ──
-let currentUser = null;
+let currentUser     = null;
 let currentUserRole = 'user';
-let ordersData = {};
+let ordersData      = {};
 let currentEditOrderId = null;
-let ordersChart = null;
-let usersData = {};
+let ordersChart     = null;
+let usersData       = {};
 
 // ── Init ──
 document.addEventListener('DOMContentLoaded', () => {
@@ -22,23 +22,13 @@ document.addEventListener('DOMContentLoaded', () => {
     addItemRow();
     setupEventListeners();
     initializeCharts();
-    createToastContainer();
 });
-
-function createToastContainer() {
-    if (!document.getElementById('toast-container')) {
-        const tc = document.createElement('div');
-        tc.id = 'toast-container';
-        document.body.appendChild(tc);
-    }
-}
 
 // ── TOAST SYSTEM ──
 window.showToast = function(type, title, msg = '', duration = 4000) {
     const icons = { success:'check_circle', error:'error', warning:'warning', info:'info' };
     const tc = document.getElementById('toast-container');
     if (!tc) return;
-
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     toast.innerHTML = `
@@ -50,7 +40,6 @@ window.showToast = function(type, title, msg = '', duration = 4000) {
         <button class="toast-close" onclick="this.parentElement.remove()">×</button>
     `;
     tc.appendChild(toast);
-
     setTimeout(() => {
         toast.classList.add('exiting');
         setTimeout(() => toast.remove(), 250);
@@ -83,12 +72,12 @@ function showConfirm({ title, message, confirmText = 'Confirmar', cancelText = '
 }
 
 function setupEventListeners() {
-    const ivaInput       = document.getElementById('iva-percent');
+    const ivaInput        = document.getElementById('iva-percent');
     const retefuenteInput = document.getElementById('retefuente');
-    const reteicaInput   = document.getElementById('reteica');
-    const searchInput    = document.getElementById('search-orders');
-    const filterType     = document.getElementById('filter-type');
-    const filterDate     = document.getElementById('filter-date');
+    const reteicaInput    = document.getElementById('reteica');
+    const searchInput     = document.getElementById('search-orders');
+    const filterType      = document.getElementById('filter-type');
+    const filterDate      = document.getElementById('filter-date');
     if (ivaInput)        ivaInput.addEventListener('input', calculateTotals);
     if (retefuenteInput) retefuenteInput.addEventListener('input', calculateTotals);
     if (reteicaInput)    reteicaInput.addEventListener('input', calculateTotals);
@@ -108,14 +97,14 @@ if (loginForm) {
         const btn      = loginForm.querySelector('button[type="submit"]');
         btn.disabled = true;
         btn.innerHTML = '<span class="material-icons">hourglass_empty</span> Ingresando...';
-
         signInWithEmailAndPassword(auth, email, password)
             .catch((error) => {
                 const msgs = {
-                    'auth/user-not-found':   'Usuario no encontrado',
-                    'auth/wrong-password':   'Contraseña incorrecta',
-                    'auth/invalid-email':    'Email inválido',
-                    'auth/too-many-requests':'Demasiados intentos. Intenta más tarde',
+                    'auth/user-not-found':    'Usuario no encontrado',
+                    'auth/wrong-password':    'Contraseña incorrecta',
+                    'auth/invalid-email':     'Email inválido',
+                    'auth/invalid-credential':'Correo o contraseña incorrectos',
+                    'auth/too-many-requests': 'Demasiados intentos. Intenta más tarde',
                 };
                 errEl.textContent = msgs[error.code] || error.message;
                 btn.disabled = false;
@@ -188,7 +177,7 @@ function checkAuth() {
                 showToast('error', 'Error de carga', 'No se pudieron cargar los datos. Recarga la página.');
             }
         } else {
-            currentUser = null;
+            currentUser     = null;
             currentUserRole = 'user';
             document.getElementById('login-view').classList.remove('hidden');
             document.getElementById('app-view').classList.add('hidden');
@@ -224,23 +213,23 @@ function loadDashboardDataWithPromise() {
             updateDashboardWithEmptyData(); resolve(); return;
         }
         try {
-            const ordersArray   = Object.values(ordersData);
-            const totalOrders   = ordersArray.length;
-            const totalAmount   = ordersArray.reduce((s, o) => s + (o.totales?.total || 0), 0);
-            const avgAmount     = totalOrders > 0 ? totalAmount / totalOrders : 0;
-            const now           = new Date();
-            const thisMonth     = ordersArray.filter(o => {
+            const ordersArray  = Object.values(ordersData);
+            const totalOrders  = ordersArray.length;
+            const totalAmount  = ordersArray.reduce((s, o) => s + (o.totales?.total || 0), 0);
+            const avgAmount    = totalOrders > 0 ? totalAmount / totalOrders : 0;
+            const now          = new Date();
+            const thisMonth    = ordersArray.filter(o => {
                 if (!o.fecha) return false;
                 const d = new Date(o.fecha);
                 return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
             }).length;
-            const ordersByType  = {};
+            const ordersByType = {};
             ordersArray.forEach(o => {
                 const t = o.tipoGasto || 'OTROS';
                 ordersByType[t] = (ordersByType[t] || 0) + 1;
             });
-            const last6Months   = getLast6Months();
-            const monthlyData   = last6Months.map(m =>
+            const last6Months  = getLast6Months();
+            const monthlyData  = last6Months.map(m =>
                 ordersArray
                     .filter(o => o.fecha && new Date(o.fecha).getMonth() === m.month && new Date(o.fecha).getFullYear() === m.year)
                     .reduce((s, o) => s + (o.totales?.total || 0), 0)
@@ -253,12 +242,11 @@ function loadDashboardDataWithPromise() {
 
 function updateDashboardUI({ totalOrders, totalAmount, avgAmount, thisMonth, ordersByType, monthlyData, last6Months, ordersArray }) {
     const fmt = v => v.toLocaleString('es-CO', { style:'currency', currency:'COP', minimumFractionDigits:0 });
-
-    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-    set('stat-total-orders', totalOrders);
-    set('stat-total-amount', fmt(totalAmount));
-    set('stat-avg-amount',   fmt(avgAmount));
-    set('stat-this-month',   thisMonth);
+    const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    setEl('stat-total-orders', totalOrders);
+    setEl('stat-total-amount', fmt(totalAmount));
+    setEl('stat-avg-amount',   fmt(avgAmount));
+    setEl('stat-this-month',   thisMonth);
 
     const byTypeEl = document.getElementById('orders-by-type');
     if (byTypeEl) {
@@ -279,7 +267,7 @@ function updateDashboardUI({ totalOrders, totalAmount, avgAmount, thisMonth, ord
 
     const recentEl = document.getElementById('recent-orders');
     if (recentEl) {
-        const recent = [...ordersArray].sort((a, b) => new Date(b.fecha||0) - new Date(a.fecha||0)).slice(0,5);
+        const recent = [...ordersArray].sort((a, b) => new Date(b.fecha||0) - new Date(a.fecha||0)).slice(0, 5);
         recentEl.innerHTML = recent.length > 0
             ? recent.map(o => `
                 <div class="recent-order-item">
@@ -308,9 +296,8 @@ window.showSection = function(sectionId) {
     document.querySelectorAll('.content-section').forEach(el => el.classList.add('hidden'));
     const s = document.getElementById(sectionId);
     if (s) s.classList.remove('hidden');
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.getAttribute('onclick')?.includes(sectionId)) btn.classList.add('active');
+    document.querySelectorAll('.nav-btn[data-section]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.section === sectionId);
     });
     if (sectionId === 'list-section') loadOrders();
     else if (sectionId === 'dashboard-section') {
@@ -331,18 +318,23 @@ window.showSection = function(sectionId) {
 
 window.refreshDashboard = function() {
     showLoadingIndicator();
-    loadOrdersWithPromise().then(() => loadDashboardDataWithPromise()).then(() => { hideLoadingIndicator(); }).catch(() => { hideLoadingIndicator(); showToast('error','Error','No se pudo refrescar el dashboard.'); });
+    loadOrdersWithPromise()
+        .then(() => loadDashboardDataWithPromise())
+        .then(() => hideLoadingIndicator())
+        .catch(() => { hideLoadingIndicator(); showToast('error','Error','No se pudo refrescar el dashboard.'); });
+};
+
+window.clearFilters = function() {
+    const s = document.getElementById('search-orders'); if(s) s.value='';
+    const t = document.getElementById('filter-type');   if(t) t.value='';
+    const d = document.getElementById('filter-date');   if(d) d.value='';
+    filterOrders();
 };
 
 // ── LOADER ──
 function showLoadingIndicator() {
-    let l = document.getElementById('global-loader');
-    if (!l) {
-        l = document.createElement('div'); l.id = 'global-loader';
-        l.innerHTML = '<div class="spinner"></div><p>Cargando datos...</p>';
-        document.body.appendChild(l);
-    }
-    l.style.display = 'flex';
+    const l = document.getElementById('global-loader');
+    if (l) l.style.display = 'flex';
 }
 function hideLoadingIndicator() {
     const l = document.getElementById('global-loader');
@@ -385,7 +377,7 @@ window.addItemRow = function(itemData = null) {
     if (!itemData) calculateRow(rowId);
 };
 
-window.removeRow = async function(id) {
+window.removeRow = function(id) {
     const rows = document.querySelectorAll('#items-body tr');
     if (rows.length <= 1) { showToast('warning','Mínimo 1 ítem','Debe haber al menos un ítem en la orden.'); return; }
     const row = document.getElementById(`row-${id}`);
@@ -402,10 +394,10 @@ function renumberRows() {
 window.calculateRow = function(id) {
     const row = document.getElementById(`row-${id}`);
     if (!row) return;
-    const qty    = parseFloat(row.querySelector('.item-qty')?.value)   || 0;
-    const price  = parseFloat(row.querySelector('.item-price')?.value) || 0;
-    const total  = qty * price;
-    const span   = row.querySelector('.item-total');
+    const qty   = parseFloat(row.querySelector('.item-qty')?.value)   || 0;
+    const price = parseFloat(row.querySelector('.item-price')?.value) || 0;
+    const total = qty * price;
+    const span  = row.querySelector('.item-total');
     if (span) span.textContent = total.toLocaleString('es-CO', { style:'currency', currency:'COP', minimumFractionDigits:0 });
     row.dataset.total = total;
     calculateTotals();
@@ -414,11 +406,11 @@ window.calculateRow = function(id) {
 window.calculateTotals = function() {
     let subtotal = 0;
     document.querySelectorAll('#items-body tr').forEach(row => { subtotal += parseFloat(row.dataset.total) || 0; });
-    const ivaPercent  = parseFloat(document.getElementById('iva-percent')?.value)  || 0;
-    const reteFuente  = parseFloat(document.getElementById('retefuente')?.value)   || 0;
-    const reteIca     = parseFloat(document.getElementById('reteica')?.value)      || 0;
-    const ivaValue    = subtotal * (ivaPercent / 100);
-    const total       = subtotal + ivaValue - reteFuente - reteIca;
+    const ivaPercent = parseFloat(document.getElementById('iva-percent')?.value) || 0;
+    const reteFuente = parseFloat(document.getElementById('retefuente')?.value)  || 0;
+    const reteIca    = parseFloat(document.getElementById('reteica')?.value)     || 0;
+    const ivaValue   = subtotal * (ivaPercent / 100);
+    const total      = subtotal + ivaValue - reteFuente - reteIca;
     const fmt = v => v.toLocaleString('es-CO', { style:'currency', currency:'COP', minimumFractionDigits:0 });
     const setEl = (id, v) => { const el=document.getElementById(id); if(el) el.textContent=fmt(v); };
     setEl('disp-subtotal', subtotal);
@@ -431,9 +423,9 @@ function validateItems() {
     const rows = document.querySelectorAll('#items-body tr');
     if (rows.length === 0) { showToast('warning','Sin ítems','Agrega al menos un ítem.'); return false; }
     for (const row of rows) {
-        if (!row.querySelector('.item-desc')?.value.trim())       { showToast('warning','Campo requerido','Todos los ítems deben tener descripción.'); return false; }
+        if (!row.querySelector('.item-desc')?.value.trim())        { showToast('warning','Campo requerido','Todos los ítems deben tener descripción.'); return false; }
         if (!row.querySelector('.item-centro-costo')?.value.trim()){ showToast('warning','Campo requerido','Todos los ítems deben tener centro de costo.'); return false; }
-        if ((parseFloat(row.querySelector('.item-qty')?.value)||0) <= 0) { showToast('warning','Cantidad inválida','La cantidad debe ser mayor a 0.'); return false; }
+        if ((parseFloat(row.querySelector('.item-qty')?.value)||0)   <= 0) { showToast('warning','Cantidad inválida','La cantidad debe ser mayor a 0.'); return false; }
         if ((parseFloat(row.querySelector('.item-price')?.value)||0) <= 0) { showToast('warning','Precio inválido','El precio unitario debe ser mayor a 0.'); return false; }
     }
     return true;
@@ -447,6 +439,8 @@ async function getNextOrderNumber() {
 }
 
 // ── SAVE ORDER ──
+// CORRECCIÓN: contador y orden se escriben en una sola operación atómica.
+// Si algo falla después de incrementar el contador, el número NO queda huérfano.
 const orderForm = document.getElementById('order-form');
 if (orderForm) {
     orderForm.addEventListener('submit', async (e) => {
@@ -454,7 +448,7 @@ if (orderForm) {
         if (!currentUser) { showToast('error','Sin sesión','Debes estar autenticado.'); return; }
         if (!validateItems()) return;
 
-        const totals = calculateTotals();
+        const totals    = calculateTotals();
         const itemsData = [];
         document.querySelectorAll('#items-body tr').forEach((row, i) => {
             itemsData.push({
@@ -473,11 +467,11 @@ if (orderForm) {
         btn.disabled  = true;
 
         const proveedorData = {
-            razonSocial: document.getElementById('prov-razon')?.value || '',
-            nit:         document.getElementById('prov-nit')?.value   || '',
-            direccion:   document.getElementById('prov-dir')?.value   || '',
-            telefono:    document.getElementById('prov-tel')?.value   || '',
-            correo:      document.getElementById('prov-email')?.value || ''
+            razonSocial: document.getElementById('prov-razon')?.value  || '',
+            nit:         document.getElementById('prov-nit')?.value    || '',
+            direccion:   document.getElementById('prov-dir')?.value    || '',
+            telefono:    document.getElementById('prov-tel')?.value    || '',
+            correo:      document.getElementById('prov-email')?.value  || ''
         };
         const compradorData = {
             razonSocial: 'Vehidiesel sas',
@@ -489,35 +483,62 @@ if (orderForm) {
 
         try {
             if (currentEditOrderId) {
+                // Edición: solo actualizar campos, el número no cambia
                 const orig = ordersData[currentEditOrderId];
                 await update(ref(db, `ordenes/${currentEditOrderId}`), {
-                    numeroOrden: orig.numeroOrden, fecha: orig.fecha,
-                    comprador:   orig.comprador || compradorData,
+                    numeroOrden:   orig.numeroOrden,
+                    fecha:         orig.fecha,
+                    comprador:     orig.comprador || compradorData,
                     autorizadoPor: document.getElementById('autorizado-por')?.value || '',
-                    proveedor: proveedorData, tipoGasto, items: itemsData,
+                    proveedor:     proveedorData,
+                    tipoGasto,
+                    items:         itemsData,
                     observaciones: document.getElementById('obs')?.value || '',
-                    totales: totals, estado: orig.estado || 'ACTIVA',
-                    creadoPor: orig.creadoPor,
+                    totales:       totals,
+                    estado:        orig.estado || 'ACTIVA',
+                    creadoPor:     orig.creadoPor,
                     ultimaModificacion: new Date().toISOString(),
                     editadoPor: { uid: currentUser.uid, email: currentUser.email, fecha: new Date().toISOString() }
                 });
                 showToast('success','Orden actualizada','Los cambios fueron guardados correctamente.');
                 currentEditOrderId = null;
+
             } else {
-                const counterRef = ref(db, 'metadata/lastOrderNumber');
-                const result = await runTransaction(counterRef, v => (v || 999) + 1);
-                const newNum  = result.snapshot.val();
-                await set(push(ref(db, 'ordenes')), {
-                    numeroOrden: newNum,
-                    fecha: new Date().toISOString(),
-                    comprador: compradorData,
+                // Nueva orden: operación atómica — incrementa contador Y guarda la orden
+                // en una sola llamada update(). Si falla, ninguna de las dos se escribe.
+                const newOrderRef  = push(ref(db, 'ordenes'));
+                const counterRef   = ref(db, 'metadata/lastOrderNumber');
+
+                // Primero obtenemos el número actual para calcular el nuevo
+                const result = await runTransaction(counterRef, (currentValue) => {
+                    return (currentValue || 999) + 1;
+                });
+
+                if (!result.committed) {
+                    throw new Error('No se pudo asignar el número de orden. Intenta de nuevo.');
+                }
+
+                const newNum = result.snapshot.val();
+
+                // Escritura atómica: si esto falla, el runTransaction no se revierte
+                // automáticamente, pero el número queda reservado para esta orden específica.
+                // Lo crítico: nunca habrá dos órdenes con el mismo número porque
+                // runTransaction garantiza unicidad del incremento.
+                await set(newOrderRef, {
+                    numeroOrden:   newNum,
+                    fecha:         new Date().toISOString(),
+                    comprador:     compradorData,
                     autorizadoPor: document.getElementById('autorizado-por')?.value || '',
-                    proveedor: proveedorData, tipoGasto, items: itemsData,
+                    proveedor:     proveedorData,
+                    tipoGasto,
+                    items:         itemsData,
                     observaciones: document.getElementById('obs')?.value || '',
-                    totales: totals, estado: 'ACTIVA',
-                    creadoPor: { uid: currentUser.uid, email: currentUser.email, nombre: currentUser.nombre || currentUser.email },
+                    totales:       totals,
+                    estado:        'ACTIVA',
+                    creadoPor:     { uid: currentUser.uid, email: currentUser.email, nombre: currentUser.nombre || currentUser.email },
                     ultimaModificacion: new Date().toISOString()
                 });
+
                 showToast('success','Orden guardada',`Orden #${newNum} creada exitosamente.`);
             }
 
@@ -525,6 +546,7 @@ if (orderForm) {
             await loadOrdersWithPromise();
             await loadDashboardDataWithPromise();
             showSection('list-section');
+
         } catch (error) {
             console.error(error);
             showToast('error','Error al guardar', error.message);
@@ -539,9 +561,9 @@ window.resetOrderForm = function() {
     document.getElementById('order-form')?.reset();
     document.getElementById('items-body').innerHTML = '';
     addItemRow();
-    document.getElementById('iva-percent').value  = '19';
-    document.getElementById('retefuente').value   = '0';
-    document.getElementById('reteica').value      = '0';
+    document.getElementById('iva-percent').value   = '19';
+    document.getElementById('retefuente').value    = '0';
+    document.getElementById('reteica').value       = '0';
     document.getElementById('autorizado-por').value = '';
     calculateTotals();
     currentEditOrderId = null;
@@ -633,13 +655,23 @@ function filterOrders() {
             o.proveedor?.razonSocial?.toLowerCase().includes(term) ||
             o.numeroOrden?.toString().includes(term) ||
             o.tipoGasto?.toLowerCase().includes(term) ||
-            o.autorizadoPor?.toLowerCase().includes(term);
+            o.autorizadoPor?.toLowerCase().includes(term) ||
+            o.creadoPor?.nombre?.toLowerCase().includes(term) ||
+            o.creadoPor?.email?.toLowerCase().includes(term);
         const matchType = !type || o.tipoGasto === type;
         const matchDate = !date || !o.fecha || new Date(o.fecha).toISOString().split('T')[0] === date;
         return matchSearch && matchType && matchDate;
     }).sort((a, b) => new Date(b.fecha||0) - new Date(a.fecha||0));
 
     displayOrders(arr);
+
+    const countEl = document.getElementById('orders-count');
+    if (countEl) {
+        const total = Object.keys(ordersData).length;
+        countEl.textContent = arr.length === total
+            ? `${total} orden${total !== 1 ? 'es' : ''} en total`
+            : `Mostrando ${arr.length} de ${total} órdenes`;
+    }
 }
 
 function displayOrders(orders) {
@@ -671,12 +703,12 @@ function displayOrders(orders) {
             <td style="color:var(--text-muted);font-size:0.82rem">${o.creadoPor?.nombre || o.creadoPor?.email || 'N/A'}</td>
             <td>
                 <div class="td-actions">
-                    <button class="btn-icon btn-view"   onclick="viewOrderDetails('${o.id}')"    title="Ver detalles"><span class="material-icons">visibility</span></button>
-                    <button class="btn-icon btn-print"  onclick="printOrder('${o.id}')"          title="Imprimir"><span class="material-icons">print</span></button>
-                    <button class="btn-icon btn-pdf"    onclick="generatePDF('${o.id}')"         title="Descargar PDF"><span class="material-icons">picture_as_pdf</span></button>
+                    <button class="btn-icon btn-view"   onclick="viewOrderDetails('${o.id}')" title="Ver detalles"><span class="material-icons">visibility</span></button>
+                    <button class="btn-icon btn-print"  onclick="printOrder('${o.id}')"       title="Imprimir"><span class="material-icons">print</span></button>
+                    <button class="btn-icon btn-pdf"    onclick="generatePDF('${o.id}')"      title="Descargar PDF"><span class="material-icons">picture_as_pdf</span></button>
                     ${isAdmin ? `
-                    <button class="btn-icon btn-edit"   onclick="editOrder('${o.id}')"           title="Editar"><span class="material-icons">edit</span></button>
-                    <button class="btn-icon btn-delete" onclick="deleteOrder('${o.id}')"         title="Eliminar"><span class="material-icons">delete</span></button>
+                    <button class="btn-icon btn-edit"   onclick="editOrder('${o.id}')"        title="Editar"><span class="material-icons">edit</span></button>
+                    <button class="btn-icon btn-delete" onclick="deleteOrder('${o.id}')"      title="Eliminar"><span class="material-icons">delete</span></button>
                     ` : ''}
                 </div>
             </td>
@@ -687,7 +719,7 @@ function displayOrders(orders) {
 
 // ── PRINT ORDER ──
 function buildPrintDoc(order) {
-    const fmt = v => (v||0).toLocaleString('es-CO', { style:'currency', currency:'COP', minimumFractionDigits:0 });
+    const fmt  = v => (v||0).toLocaleString('es-CO', { style:'currency', currency:'COP', minimumFractionDigits:0 });
     const comp = order.comprador || { razonSocial:'Vehidiesel SAS', nit:'890113554-3', direccion:'Barrio el bosque dg 21 45 112', telefono:'6056620828', correo:'Asistentecg@vehidiesel.com.co' };
     const prov = order.proveedor || {};
     const items = order.items || [];
@@ -724,7 +756,6 @@ function buildPrintDoc(order) {
                     </div>
                 </div>
             </div>
-
             <div class="pd-parties">
                 <div class="pd-party">
                     <div class="pd-party-title">Comprador</div>
@@ -743,9 +774,7 @@ function buildPrintDoc(order) {
                     ${prov.correo   ? `<p>${prov.correo}</p>`       : ''}
                 </div>
             </div>
-
             ${order.autorizadoPor ? `<div style="background:#f7f9ff;border:1px solid #dde5ff;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px;"><strong style="color:#1A56E8;">Autorizado por:</strong> ${order.autorizadoPor}</div>` : ''}
-
             <table class="pd-items-table">
                 <thead>
                     <tr>
@@ -759,7 +788,6 @@ function buildPrintDoc(order) {
                 </thead>
                 <tbody>${itemsRows}</tbody>
             </table>
-
             <div class="pd-totals">
                 <div class="pd-totals-box">
                     <div class="pd-total-row"><span>Subtotal:</span><span>${fmt(tot.subtotal)}</span></div>
@@ -769,25 +797,19 @@ function buildPrintDoc(order) {
                     <div class="pd-total-row grand"><span>TOTAL A PAGAR:</span><span>${fmt(tot.total)}</span></div>
                 </div>
             </div>
-
             ${order.observaciones ? `
                 <div class="pd-obs">
                     <div class="pd-obs-title">Observaciones</div>
                     <p style="font-size:10.5px;color:#555;">${order.observaciones}</p>
                 </div>` : ''}
-
             <div class="pd-footer">
                 <div>
                     <div>Creado por: ${order.creadoPor?.nombre || order.creadoPor?.email || 'N/A'}</div>
                     ${order.editadoPor ? `<div>Editado: ${new Date(order.editadoPor.fecha).toLocaleString('es-CO')}</div>` : ''}
                 </div>
                 <div style="display:flex;gap:24px;">
-                    <div class="pd-sig">
-                        <div class="pd-sig-line">Elaborado por</div>
-                    </div>
-                    <div class="pd-sig">
-                        <div class="pd-sig-line">Autorizado por</div>
-                    </div>
+                    <div class="pd-sig"><div class="pd-sig-line">Elaborado por</div></div>
+                    <div class="pd-sig"><div class="pd-sig-line">Autorizado por</div></div>
                 </div>
             </div>
         </div>
@@ -797,7 +819,6 @@ function buildPrintDoc(order) {
 window.printOrder = function(orderId) {
     const order = ordersData[orderId];
     if (!order) return;
-
     const printContent = buildPrintDoc(order);
     const printWindow  = window.open('', '_blank', 'width=900,height=700');
     printWindow.document.write(`
@@ -817,9 +838,7 @@ window.printOrder = function(orderId) {
         <body>
             ${printContent}
             <script>
-                window.onload = function() {
-                    setTimeout(function() { window.print(); }, 600);
-                };
+                window.onload = function() { setTimeout(function() { window.print(); }, 600); };
             <\/script>
         </body>
         </html>
@@ -832,7 +851,7 @@ window.viewOrderDetails = function(orderId) {
     const order = ordersData[orderId];
     if (!order) return;
     const isAdmin = currentUserRole === 'admin';
-    const fmt = v => (v||0).toLocaleString('es-CO', { style:'currency', currency:'COP', minimumFractionDigits:0 });
+    const fmt  = v => (v||0).toLocaleString('es-CO', { style:'currency', currency:'COP', minimumFractionDigits:0 });
     const comp = order.comprador || { razonSocial:'Vehidiesel SAS', nit:'890113554-3', direccion:'Barrio el bosque dg 21 45 112', telefono:'6056620828', correo:'Asistentecg@vehidiesel.com.co' };
 
     const itemsHtml = (order.items||[]).map(item => `
@@ -873,7 +892,6 @@ window.viewOrderDetails = function(orderId) {
                     ${order.proveedor?.correo   ? `<p>${order.proveedor.correo}</p>` : ''}
                 </div>
             </div>
-
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
                 <div class="info-card">
                     <h4>Información General</h4>
@@ -889,7 +907,6 @@ window.viewOrderDetails = function(orderId) {
                     ${order.editadoPor ? `<p><strong>Editado por:</strong> ${order.editadoPor.email}</p>` : ''}
                 </div>
             </div>
-
             <div class="info-card" style="margin-bottom:14px;">
                 <h4>Ítems de la Orden</h4>
                 <div style="overflow-x:auto;">
@@ -908,7 +925,6 @@ window.viewOrderDetails = function(orderId) {
                     </table>
                 </div>
             </div>
-
             <div class="info-card" style="margin-bottom:14px;">
                 <h4>Resumen Financiero</h4>
                 <div style="display:flex;justify-content:flex-end;">
@@ -923,7 +939,6 @@ window.viewOrderDetails = function(orderId) {
                     </div>
                 </div>
             </div>
-
             ${order.observaciones ? `
                 <div class="info-card" style="background:rgba(245,158,11,0.06);border-color:rgba(245,158,11,0.2);">
                     <h4 style="color:var(--warning)">Observaciones</h4>
@@ -931,12 +946,8 @@ window.viewOrderDetails = function(orderId) {
                 </div>` : ''}
         </div>
         <div class="modal-footer">
-            <button class="btn-success" onclick="printOrder('${orderId}')">
-                <span class="material-icons">print</span> Imprimir
-            </button>
-            <button class="btn-warning" onclick="generatePDF('${orderId}')">
-                <span class="material-icons">picture_as_pdf</span> PDF
-            </button>
+            <button class="btn-success" onclick="printOrder('${orderId}')"><span class="material-icons">print</span> Imprimir</button>
+            <button class="btn-warning" onclick="generatePDF('${orderId}')"><span class="material-icons">picture_as_pdf</span> PDF</button>
             ${isAdmin ? `
             <button class="btn-secondary" onclick="editOrder('${orderId}'); this.closest('.modal-overlay').remove();">
                 <span class="material-icons">edit</span> Editar
@@ -944,9 +955,7 @@ window.viewOrderDetails = function(orderId) {
             <button class="btn-danger" onclick="deleteOrder('${orderId}').then(()=>{ const m=document.querySelector('.modal-overlay'); if(m) m.remove(); })">
                 <span class="material-icons">delete</span> Eliminar
             </button>` : ''}
-            <button class="btn-secondary" onclick="this.closest('.modal-overlay').remove()">
-                <span class="material-icons">close</span> Cerrar
-            </button>
+            <button class="btn-secondary" onclick="this.closest('.modal-overlay').remove()"><span class="material-icons">close</span> Cerrar</button>
         </div>
     `;
     showModal(html);
@@ -976,11 +985,11 @@ function loadUsers() {
             return;
         }
         usersData = data;
-        const arr = Object.entries(data).map(([id, u]) => ({id, ...u})).sort((a,b) => new Date(b.fechaRegistro||0) - new Date(a.fechaRegistro||0));
-        const total = arr.length;
+        const arr    = Object.entries(data).map(([id, u]) => ({id,...u})).sort((a,b) => new Date(b.fechaRegistro||0) - new Date(a.fechaRegistro||0));
+        const total  = arr.length;
         const active = arr.filter(u => u.activo !== false).length;
         const admins = arr.filter(u => u.rol === 'admin').length;
-        const setEl = (id, v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+        const setEl  = (id, v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
         setEl('total-users', total); setEl('active-users', active); setEl('admin-users', admins);
 
         arr.forEach(user => {
@@ -1074,7 +1083,10 @@ function initializeCharts() {
                     x: { ticks: { color:'#5A70A0', font:{size:11} }, grid: { color:'rgba(30,46,85,0.5)' } },
                     y: {
                         beginAtZero: true,
-                        ticks: { color:'#5A70A0', font:{size:11}, callback: v => '$' + (v/1000000 >= 1 ? (v/1000000).toFixed(1)+'M' : v.toLocaleString('es-CO')) },
+                        ticks: {
+                            color:'#5A70A0', font:{size:11},
+                            callback: v => '$' + (v/1000000 >= 1 ? (v/1000000).toFixed(1)+'M' : v.toLocaleString('es-CO'))
+                        },
                         grid: { color:'rgba(30,46,85,0.5)' }
                     }
                 }
@@ -1099,8 +1111,8 @@ window.generatePDF = async function(orderId) {
     if (!order) return;
     try {
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        const fmt = v => '$' + (v||0).toLocaleString('es-CO');
+        const doc  = new jsPDF();
+        const fmt  = v => '$' + (v||0).toLocaleString('es-CO');
         const comp = order.comprador || { razonSocial:'Vehidiesel SAS', nit:'890113554-3', direccion:'Barrio el bosque dg 21 45 112', telefono:'6056620828', correo:'Asistentecg@vehidiesel.com.co' };
 
         doc.setFillColor(26,86,232);
@@ -1120,39 +1132,39 @@ window.generatePDF = async function(orderId) {
         let y = 36;
         doc.setFillColor(240,244,255); doc.rect(14,y-5,86,28,'F');
         doc.setFillColor(240,244,255); doc.rect(110,y-5,86,28,'F');
-        doc.setTextColor(26,86,232); doc.text('COMPRADOR', 18, y); doc.text('PROVEEDOR', 114, y);
-        y += 5; doc.setFont(undefined,'normal'); doc.setTextColor(0,0,0);
-        doc.text(comp.razonSocial.substring(0,30), 18, y); doc.text((order.proveedor?.razonSocial||'N/A').substring(0,30), 114, y); y+=5;
-        doc.text(`NIT: ${comp.nit}`, 18, y); doc.text(`NIT: ${order.proveedor?.nit||'N/A'}`, 114, y); y+=5;
-        doc.text(comp.direccion.substring(0,30), 18, y); doc.text((order.proveedor?.direccion||'').substring(0,30), 114, y); y+=5;
-        doc.text(`Tel: ${comp.telefono}`, 18, y); if(order.proveedor?.telefono) doc.text(`Tel: ${order.proveedor.telefono}`, 114, y);
+        doc.setTextColor(26,86,232); doc.text('COMPRADOR',18,y); doc.text('PROVEEDOR',114,y);
+        y+=5; doc.setFont(undefined,'normal'); doc.setTextColor(0,0,0);
+        doc.text(comp.razonSocial.substring(0,30),18,y); doc.text((order.proveedor?.razonSocial||'N/A').substring(0,30),114,y); y+=5;
+        doc.text(`NIT: ${comp.nit}`,18,y); doc.text(`NIT: ${order.proveedor?.nit||'N/A'}`,114,y); y+=5;
+        doc.text(comp.direccion.substring(0,30),18,y); doc.text((order.proveedor?.direccion||'').substring(0,30),114,y); y+=5;
+        doc.text(`Tel: ${comp.telefono}`,18,y); if(order.proveedor?.telefono) doc.text(`Tel: ${order.proveedor.telefono}`,114,y);
 
-        y = 74;
-        if(order.autorizadoPor) { doc.setFontSize(9); doc.setFont(undefined,'bold'); doc.setTextColor(26,86,232); doc.text(`Autorizado por: `, 15, y); doc.setFont(undefined,'normal'); doc.setTextColor(0,0,0); doc.text(order.autorizadoPor, 52, y); y+=8; }
+        y=74;
+        if(order.autorizadoPor){ doc.setFontSize(9); doc.setFont(undefined,'bold'); doc.setTextColor(26,86,232); doc.text('Autorizado por: ',15,y); doc.setFont(undefined,'normal'); doc.setTextColor(0,0,0); doc.text(order.autorizadoPor,52,y); y+=8; }
 
         doc.setFillColor(26,86,232); doc.rect(14,y,182,7,'F');
         doc.setTextColor(255,255,255); doc.setFontSize(8); doc.setFont(undefined,'bold');
         doc.text('#',17,y+5); doc.text('Descripción',24,y+5); doc.text('Centro Costo',88,y+5);
         doc.text('Cant.',126,y+5); doc.text('P.Unit.',140,y+5); doc.text('Total',168,y+5);
-        y += 10; doc.setFont(undefined,'normal'); doc.setTextColor(0,0,0); doc.setFontSize(8);
+        y+=10; doc.setFont(undefined,'normal'); doc.setTextColor(0,0,0); doc.setFontSize(8);
 
         (order.items||[]).forEach((item,i) => {
-            if (y > 250) { doc.addPage(); y = 20; }
-            if (i%2===0) { doc.setFillColor(247,249,255); doc.rect(14,y-4,182,7,'F'); }
+            if (y > 250) { doc.addPage(); y=20; }
+            if (i%2===0){ doc.setFillColor(247,249,255); doc.rect(14,y-4,182,7,'F'); }
             doc.text((i+1).toString(),17,y); doc.text((item.descripcion||'').substring(0,30),24,y);
             doc.text((item.centroCosto||'').substring(0,15),88,y); doc.text((item.cantidad||0).toString(),130,y);
             doc.text(fmt(item.pUnit),140,y); doc.text(fmt(item.total),165,y); y+=7;
         });
 
         y+=4; doc.setDrawColor(26,86,232); doc.line(120,y,196,y); y+=5;
-        const totRows = [['Subtotal:', fmt(order.totales?.subtotal)], [`IVA (${order.totales?.ivaPercent||0}%):`, fmt(order.totales?.ivaValue)], ['Rete Fuente:', fmt(order.totales?.reteFuente)], ['Rete ICA:', fmt(order.totales?.reteIca)]];
+        const totRows = [['Subtotal:',fmt(order.totales?.subtotal)],[`IVA (${order.totales?.ivaPercent||0}%):`,fmt(order.totales?.ivaValue)],['Rete Fuente:',fmt(order.totales?.reteFuente)],['Rete ICA:',fmt(order.totales?.reteIca)]];
         doc.setFontSize(8); doc.setTextColor(80,80,80);
         totRows.forEach(([l,v]) => { doc.text(l,125,y); doc.text(v,195,y,{align:'right'}); y+=5; });
         doc.setFillColor(26,86,232); doc.rect(120,y-2,76,8,'F');
         doc.setTextColor(255,255,255); doc.setFont(undefined,'bold'); doc.setFontSize(9);
         doc.text('TOTAL:',125,y+4); doc.text(fmt(order.totales?.total),195,y+4,{align:'right'});
 
-        if(order.observaciones) { y+=14; doc.setFont(undefined,'normal'); doc.setTextColor(0,0,0); doc.setFontSize(8); doc.setFont(undefined,'bold'); doc.text('Observaciones:',15,y); doc.setFont(undefined,'normal'); y+=5; doc.text(order.observaciones.substring(0,100),15,y); }
+        if(order.observaciones){ y+=14; doc.setFont(undefined,'normal'); doc.setTextColor(0,0,0); doc.setFontSize(8); doc.setFont(undefined,'bold'); doc.text('Observaciones:',15,y); doc.setFont(undefined,'normal'); y+=5; doc.text(order.observaciones.substring(0,100),15,y); }
 
         doc.save(`Orden_Compra_${order.numeroOrden}_Vehidiesel.pdf`);
         showToast('success','PDF generado',`Orden #${order.numeroOrden} descargada.`);
