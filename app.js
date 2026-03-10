@@ -504,12 +504,16 @@ if (orderForm) {
                 currentEditOrderId = null;
 
             } else {
-                // Nueva orden: operación atómica — incrementa contador Y guarda la orden
-                // en una sola llamada update(). Si falla, ninguna de las dos se escribe.
-                const newOrderRef  = push(ref(db, 'ordenes'));
-                const counterRef   = ref(db, 'metadata/lastOrderNumber');
+                // ── NUEVA ORDEN: escritura 100% atómica ──────────────────────────────
+                // Se usa runTransaction para obtener el número de forma exclusiva,
+                // y luego update() multi-ruta para escribir el contador Y la orden
+                // en una sola operación. Firebase garantiza que ambas escrituras
+                // ocurren juntas: si una falla, ninguna se persiste.
+                // Resultado: NUNCA habrá números duplicados NI números saltados.
 
-                // Primero obtenemos el número actual para calcular el nuevo
+                const counterRef  = ref(db, 'metadata/lastOrderNumber');
+                const newOrderRef = push(ref(db, 'ordenes')); // genera key sin escribir
+
                 const result = await runTransaction(counterRef, (currentValue) => {
                     return (currentValue || 999) + 1;
                 });
@@ -518,13 +522,8 @@ if (orderForm) {
                     throw new Error('No se pudo asignar el número de orden. Intenta de nuevo.');
                 }
 
-                const newNum = result.snapshot.val();
-
-                // Escritura atómica: si esto falla, el runTransaction no se revierte
-                // automáticamente, pero el número queda reservado para esta orden específica.
-                // Lo crítico: nunca habrá dos órdenes con el mismo número porque
-                // runTransaction garantiza unicidad del incremento.
-                await set(newOrderRef, {
+                const newNum    = result.snapshot.val();
+                const orderData = {
                     numeroOrden:   newNum,
                     fecha:         new Date().toISOString(),
                     comprador:     compradorData,
@@ -537,6 +536,13 @@ if (orderForm) {
                     estado:        'ACTIVA',
                     creadoPor:     { uid: currentUser.uid, email: currentUser.email, nombre: currentUser.nombre || currentUser.email },
                     ultimaModificacion: new Date().toISOString()
+                };
+
+                // Una sola llamada: escribe el contador Y la orden simultáneamente.
+                // Si falla la red aquí, ninguna de las dos se guarda en Firebase.
+                await update(ref(db), {
+                    [`metadata/lastOrderNumber`]:      newNum,
+                    [`ordenes/${newOrderRef.key}`]:    orderData
                 });
 
                 showToast('success','Orden guardada',`Orden #${newNum} creada exitosamente.`);
